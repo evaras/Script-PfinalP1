@@ -4,7 +4,7 @@ import subprocess
 from lxml import etree
 from subprocess import Popen
 
-#Lista de configuración
+#Lista de configuracion
 #Lectura de las solicitudes de ejecucion
 parametros_comando = sys.argv
 #Lista de opciones disponibles en los parametros de ejecucion
@@ -17,22 +17,14 @@ parametro_num = 0;
 ejecutar = False
 #Variables create
 servidores_creados = []
+servidores_acrear = []
 
 #Funciones principales de ejecucion
-def create():
-	#Comprobacion y creacion de c1
-	if os.path.exists("/mnt/tmp/pfinal/c1.qcow2"):
-		return 
-	else:
-		creacion("c1")
-	#comprobacion y creacion de lb
-	if os.path.exists("/mnt/tmp/pfinal/lb.qcow2"):
-		return 
-	else:
-		creacion("lb")
-	#comprobacion y creacion de servidores
+def create(numerodemaquinas):
 	checkServers()
-
+	servidoresACrear(numerodemaquinas)
+	for i in servidores_acrear:
+		creacion(i)
 def start():
 	return
 def stop():
@@ -41,6 +33,7 @@ def destroy():
 	return
 
 #Funciones auxiliares
+#Funciones auxiliares CREATE
 def creacion(name1):
 	os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 '+name1+'.qcow2')
 	os.system('cp plantilla-vm-p3.xml '+name1+'.xml')
@@ -62,8 +55,38 @@ def creacion(name1):
 		writemodel2 = etree.SubElement(writesource2, 'model', type='virtio')
 	else:
 		interface.set("bridge", "LAN2")
+def checkServers():
+	#Comprobacion de c1
+	if os.path.exists("/mnt/tmp/pfinal/c1.qcow2"):
+		servidores_creados.append("c1")
+	else:
+		servidores_acrear.append("c1")
 
+	#comprobacion de lb
+	if os.path.exists("/mnt/tmp/pfinal/lb.qcow2"): 
+		servidores_creados.append("lb")
+	else:
+		servidores_acrear.append("lb")
 
+	#Comprobacion de servidores ya creados
+	for i in opciones_parametros:
+		if os.path.exists("/mnt/tmp/pfinal/S"+i+".qcow2"):
+			servidores_creados.append('S'+i)
+		else:
+def servidoresACrear(numerodemaquinas):
+	numeroexistentes = len(servidores_creados) - 2
+	numeroservsacrear = numerodemaquinas - numeroexistentes
+	numeroauxiliar = 1
+	while numeroservacrear>0:
+		for i in servidores_creados:
+			if i==("S"+numeroauxiliar):
+				numeroauxiliar++
+			else:
+				servidores_acrear.append(i)
+				numeroauxiliar++
+				numeroservacrear--
+		
+			
 
 
 #Comienzo de ejecucion
@@ -90,7 +113,7 @@ elif len(parametros_comando) == 3: #Si se define la orden y los parametros corre
 else:
 	print("Para ejecutar el script debe definir una orden entre las posibles, para mas info opcion -h")
 
-#Si el comando es correcto, comenzamos la ejecución
+#Si el comando es correcto, comenzamos la ejecucion
 if (ejecutar == True):
 	if orden=="create":
 		create(parametro_num)
