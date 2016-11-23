@@ -1,0 +1,5 @@
+INFO ÚTIL/NECESARIA EXAMEN:
+
+1_ En el CREATE modificamos un xml, función exacta de este en la creación
+
+2_Funcionamiento del tree en plan bien, modificar los comentarios a medida que sepamos más concreto el significado

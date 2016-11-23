@@ -23,114 +23,220 @@ parametro_num = 0;
 ejecutar = False
 
 #Variables create
+#Variable que almacena los nombres de los servidores disponibles para arrancar
 servidores_creados = []
+#Variable auxiliar empleada para almacenar los nombres de los servidores a crear
 servidores_acrear = []
-#Variables Start
-servidores_arrancados = []
-servidores_a_arrancar = []
+
+
 
 #Funciones principales de ejecucion
+
+
+#Funcion principal de creacion de MVs
 def create(numerodemaquinas):
-	print ("Dentro del create, el parametro que le pasamos es ", numerodemaquinas)
-	numerodeservers = numerodemaquinas
-	checkServers(numerodeservers)
-	print ("Esto es el array servidores creados", servidores_creados)
-	print ("Esto es el array servidores_acrear", servidores_acrear)
+
+	#Función que comprueba que servidores están creados ya, y cuales faltan añadiendolos a las listas correspondientes
+	checkServers(numerodemaquinas)
 	
+	#En funcion de la informacion obtenida en la funcion checkservers crea las maquinas correspondientes
 	for i in servidores_acrear:
+
+		#funcion de creacion de una maquina virtual
 		creacion(i)
+
 		numerodemaquinas = numerodemaquinas -1
 	return
 
-def start(numerodemaquinas):	#Configuracion de host
+#Funcion principal de arranque de MVs
+def start(numerodemaquinas):	
+	
+	#Configuracion del escenario, en su apartado se explican los pasos
 	configuracionEscenario()
-	#Comprobacion de existencia de las maquinas
+
+	#Empleamos la funcion checkservers para guardar en una lista los servidores existentes
 	checkServers(numerodemaquinas)
+
+	#Variable que almacena la existencia/inexistencia de c1 y lb
 	c1_lb_exist = False
+
+	#Variable que almacena la existencia/inexistencia de los servidores que se busca arrancar
 	servidores_exist = False
+
+	#Comprobamos que c1 y lb existen
 	if servidores_creados.count("c1") and servidores_creados.count("lb"):
+
+		#Si existen modificamos la variable:
 		c1_lb_exist = True
+
+	#Comprobamos que existen servidores suficientes para arrancar
 	if not len(servidores_creados)-2 < numerodemaquinas:
+
+		#Si existen modificamos la avriable
 		servidores_exist = True
+
+	#Si se cumplen todas las condiciones se procede a arrancar las maquinas
 	if c1_lb_exist == True and servidores_exist == True:
+
+		#Funcion encargada de arrancar las maquinas
 		arrancar(numerodemaquinas)
+
+	#Si no existen se escribe un mensaje de aviso
 	else:
 		print ("No se dan las condiciones correctas para arrancar las maquinas solicitadas")
+		print ("Debe crear las maquinas que desee ejecutar antes mediante la opcion create <num_servidores>")
+		print ("Para mas informacion emplee el comando -help")
 
-
-
+#Funcion principal de parada de maquinas
 def stop():
 	return
+
+#Funcion principal de destruccion de maquinas
 def destroy():
 	return
 
 #Funciones auxiliares
+
+
+#CHECKSERVERS(): Esta funcion realiza dos funciones:
+#1_ Comprueba los servidores existentes y los añade a una lista
+#2_ Calcula cuales se deben crear para satisfacer el parametro introducido
 def checkServers(numerodeservers):
-	print ("Esta es la variable numero de servers en la funcion numero de servers ", numerodeservers)
+	
+	
+	#Variable que representa el numero de servidores a crear, se modifica mas adelante
 	numero = numerodeservers
+
+	#Variable auxiliar que almacena el numero de servidores creados
 	numerocreados = 0
-	#Comprobacion de c1
+
+
+	#Comprobacion de c1 (explicacion os.path.exists: Devuelve true si el dierctorio/archivo existe y false en caso contrario)
 	if os.path.exists("/mnt/tmp/pfinal/c1.qcow2"):
+		#Si c1 existe lo añade a la lista de servidores creados (explicacion .append(): añade el elemento entre parentesis a la lista que lo llama)
 		servidores_creados.append("c1")
 	else:
+		#Si c1 no existe lo añade a la lista de pendientes de crear
 		servidores_acrear.append("c1")
 
 	#comprobacion de lb
-	if os.path.exists("/mnt/tmp/pfinal/lb.qcow2"): 
+	if os.path.exists("/mnt/tmp/pfinal/lb.qcow2"):
+		#Si lb existe lo añade a la lista de servidores creados 
 		servidores_creados.append("lb")
 	else:
+		#Si lb no existe lo añade a la lista de pendientes de crear
 		servidores_acrear.append("lb")
 
-	#Comprobacion de servidores ya creados
+	#1_ Comprobacion de servidores, comprueba que servidores existen y los añade a la lista de servidores_creados
+	#2_ Por cada servidor que exista incrementa la variable auxiliar servidores creados
 	for i in opciones_parametros:
+
+		#Si el servidor comprobado existe
 		if os.path.exists("/mnt/tmp/pfinal/S"+i+".qcow2"):
+
+			#Añadimos el servidor a la lista
 			servidores_creados.append('S'+i)
+
+			#Incrementamos la variable que cuenta el numero de servidores existentes
 			numerocreados = numerocreados +1
+
+	#Calculo de servidores que debemos crear para cumplir con el parametro introducido
 	numero = numero - numerocreados
+
+	#Si la variable es mayor que cero debemos crear x servidores
 	if numero > 0:
+
+		#Mientras la variable sea >0 debemos seguir creando servidores
 		while numero > 0:
+
+			#Recorremos la lista con las opciones de servidores
 			for i in opciones_parametros:
+
+				#Si no existe el servidor comprobado
 				if not servidores_creados.count("S"+i):
+
+					#Lo añadimos a la lista de pendientes de crear
 					servidores_acrear.append('S'+i)
+
+					#Decrementamos la variable de pendientes
 					numero = numero-1
+
+				#Cuando la variable llega a 0 salimos del bucle 
 				if numero == 0:
 					break
 	return
 
+
 #Funciones auxiliares CREATE
+
+#Funcion estricta de creacion:
+#1_ Crea la imagen .qcow
+#2_ Crea la copia del xml y lo modifica
 def creacion(name):
+
+	#Creacion de la imagen .qcow
 	os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 '+name+'.qcow2')
+
+	#Copia de la plantilla xml con el nombre adecuado
 	os.system('cp plantilla-vm-p3.xml '+name+'.xml')
+
+	#Llamada a la funcion encargada de modificar el xml
 	modificarXML(name)
 	return
+
+#Funcion de modificación de la informacion del xml
 def modificarXML(name):
 	print("Entramos en la funcion de modificarXML")
+
+	#Creamos el arbol a partir del documento xml correspondiente
 	tree = etree.parse(name+".xml")
+
+	#Obtenemos la raíz
 	root = tree.getroot()
 	doc = etree.ElementTree(root)
 
+	#Cambiamos el nombre de la maquina (etiqueta name del xml)
 	name1 = root.find("name")
 	name1.text = name
 
+	#Cambiamos el archivo predeterminado en el que buscar la imagen
 	source = root.find("./devices/disk/source")
 	source.set("file", "/mnt/tmp/pfinal/"+name+".qcow2")
 
+	#Modificamos el valor de la etiqueta ethernet en funcion de las carcateristicas de la maquina
 	interface = root.find("./devices/interface/source")
-	
+
+	#c1 se conecta a la LAN1
 	if name == 'c1':
 		interface.set("bridge", "LAN1")
+
+	#lb a la 1 y a la 2, eso implica que debemos duplicar el campo interface
 	elif name == 'lb':
+
+		#Modificacion del campo interface existente
 		interface.set("bridge", "LAN1")
 		interface2 = root.find("devices")
+
+		#Creacion del segundo campo interface
 		writeinterface2 = etree.SubElement(interface2, 'interface', type='bridge')
 		writesource2 = etree.SubElement(writeinterface2, 'source', bridge='LAN2')
 		writemodel2 = etree.SubElement(writesource2, 'model', type='virtio')
+	
+	#Modificacion de lcampo interface de los servidores, estos se conectan exclusivamente a la LAN2
 	else:
 		interface.set("bridge", "LAN2")
+
+	#Seleccionamos el archivo a reescribir
 	outFile = open(name+".xml","w")
+
+	#Reescribimos
 	doc.write(outFile)
 	return
-#Funciones auxiliares start
+
+
+#Funciones auxiliares START
+
+#CONFIGURACIONESCENARIO(): Funcion de configuracion de escenario, activa las LANs y los bridges 
 def configuracionEscenario():
 	os.system("sudo brctl addbr LAN1")
 	os.system("sudo brctl addbr LAN2")
@@ -140,33 +246,17 @@ def configuracionEscenario():
 	os.system("sudo ip route add 10.0.0.0/16 via 10.0.1.1")
 	os.system('HOME=/mnt/tmp sudo virt-manager')
 	return
+
+#ARRANCADA(): Comprueba si una maquina esta arrancada
 def arrancada(hostname):
 	if os.system("sudo virsh list | grep -q "+hostname) == 0:
 		return 1
 	else:
 		return 0
-'''def checkArrancados(numeroaarrancar): #Rellena una lista con los servidores que ya han sido arrancados
-	numero = numeroaarrancar
-	numeroserversarrancados = 0
-	for i in servidores_creados:
-		if os.system("sudo virsh list | grep -q "+i) == 0:
-			return
-		else:
-			servidores_a_arrancar.append(i)
-	return
-def servidoresAArrancar(numerodemaquinas): #Rellena una lista con los nombres de los servidores que faltan por arrancar
-	numeroarrancados = len(servidores_arrancados) - 2
-	numeroservsaarrancar = numerodemaquinas - numeroarrancados
-	numeroauxiliar = 1
-	while numeroservaarrancar>0:
-		for i in servidores_creados:
-			if servidores_arrancados.count(i):
-				numeroauxiliar = numeroauxiliar + 1
-			else:
-				servidores_a_arrancar.append(i)
-				numeroservacrear = numeroservacrear - 1
-	return'''
-#Arranca los servidores pendientes 
+
+#ARRANCAR: Arranca los servidores pendientes
+#1_ Comprueba que servidores estan arrancados
+#2_ Arranca los que falten por arrancar 
 def arrancar(numerodemaquinas):
 	numeroarrancadas = numerodemaquinas
 	arranca("host")

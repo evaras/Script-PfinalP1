@@ -1,0 +1,9 @@
+Mejoras SCRIPT:
+
+1_ En el CREATE se me ocurrió una pero se me ha olvidado, chequear again
+
+2_ En la función CHECKSERVERS optmizar el final, seguro que se pueden eliminar lineas de codigo y algún bucle
+
+3_ Añadir en el START la opción de crear los servidores que faltan
+
+4_ Añadir en el START la opcion de arrancar solo las existentes (en caso de que falte alguna) en vez de crear las que faltan
