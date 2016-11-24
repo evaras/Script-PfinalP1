@@ -7,3 +7,11 @@ Mejoras SCRIPT:
 3_ Añadir en el START la opción de crear los servidores que faltan
 
 4_ Añadir en el START la opcion de arrancar solo las existentes (en caso de que falte alguna) en vez de crear las que faltan
+
+5_ La función configuracion de escenario solo debe llamarse una vez, si ya esta configurado no => Comprobación de configuración previa a la ejecución
+
+6_ En la función arrancar siempre llama a la función ARRANCA(HOST) sin comprobar antes si esta arrancado => Se podría pensar como comprobarlo para no hacer eso siempre
+
+7_ En la función arrancar habría que comprobar antes cuantas hay arrancadas, porque si ej: estan arrancadas la 2 y la 5 y creadas la 1, la 2 y la 5, un start 2 arrancará la 1, y no haría falta, porque ya hay 2 arrancadas
+
+8_ La funcion ARRANCA() y sus subfunciones se pueden optimizar de mil maneras => Estudio en detalle

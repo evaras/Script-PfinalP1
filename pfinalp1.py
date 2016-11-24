@@ -28,6 +28,8 @@ servidores_creados = []
 #Variable auxiliar empleada para almacenar los nombres de los servidores a crear
 servidores_acrear = []
 
+#Variables start
+servidores_noarrancados = []
 
 
 #Funciones principales de ejecucion
@@ -222,7 +224,7 @@ def modificarXML(name):
 		writesource2 = etree.SubElement(writeinterface2, 'source', bridge='LAN2')
 		writemodel2 = etree.SubElement(writesource2, 'model', type='virtio')
 	
-	#Modificacion de lcampo interface de los servidores, estos se conectan exclusivamente a la LAN2
+	#Modificacion de el campo interface de los servidores, estos se conectan exclusivamente a la LAN2
 	else:
 		interface.set("bridge", "LAN2")
 
@@ -258,44 +260,88 @@ def arrancada(hostname):
 #1_ Comprueba que servidores estan arrancados
 #2_ Arranca los que falten por arrancar 
 def arrancar(numerodemaquinas):
-	numeroarrancadas = numerodemaquinas
+
+	#Variable auxiliar para ir contando las que faltan por arrancar.
+	numeroporarrancar = numerodemaquinas
+
+	#Funcion encargada de conectar el host a las LAN correspondientes
 	arranca("host")
+
+	#Comprueba si c1 esta arrancado y si no lo arranca
 	if arrancada("c1") == 1:
 		print "Maquina virtual c1 esta arrancada"
 	else:
 		arranca("c1")
+		print "Maquina virtual c1 esta arrancada"
+
+	#Comprueba si lb esta arrancado y si no lo arranca
 	if arrancada("lb") == 1:
 		print "Maquina virtual lb esta arrancada"
 	else:
 		arranca("lb")
+
+	#Va comprobando los servidores que estan arrancados y los que no, los mete en una lista de disponibles
 	for i in servidores_creados:
-		if arrancada(i) == 1:
-			print "Maquina virtual "+i+" esta arrancada"
-			numeroarrancadas = numeroarrancadas -1
-		else:
+		if not arrancada(i) == 1:
+			#Lista de servidores disponibles para arrancar
+			servidores_noarrancados.append(i)
+		else: 
+			numeroporarrancar = numeroporarrancar - 1
+
+	#Recorre la lista de servidores disponibles para arrancar y va arrancando y disminuyendo la variable con el numero de servidores pendientes
+	for i in servidores_noarrancados:
+
+			#Funcion encargada de arrancar los servidores
 			arranca(i)
-			numeroarrancadas = numeroarrancadas -1
+			numeroporarrancar = numeroporarrancar -1
+		if numeroporarrancar == 0
+			break
+
+#Funcion encargada de arrancar los servidores
 def arranca(name):
+
+	#Condicion que diferencia entre el sistema anfitrion y las mvs
 	if (name != "host"):
+
+		#Nos movemos a la carpeta pfinal
 		os.chdir("/mnt/tmp/pfinal")
+
+		#Abrimos el sistema de ficheros en una carpeta en local para tener acceso a ellos y poder modificarlos
 		os.system('sudo vnx_mount_rootfs -s -r '+name+'.qcow2 mnt')
+
+		#Entramos en el sistema de ficheros de la mv y comenzamos a modificar los archivos de configuracion
 		os.chdir("/mnt/tmp/pfinal/mnt/etc")
+
+		#Modificamos el documento hostname
 		dochostname = open("hostname", "w")
 		dochostname.write(name)
 		dochostname.close()
+
+		#Llamamos a la funcion hosts que modifica el archivo de mismo nombre
 		hosts(name)
 		os.chdir("/mnt/tmp/pfinal/mnt/etc/network")
+
+		#Llamamos a la funcion interfaz que modifica el archivo de mismo nombre
 		interface(name)
 		os.chdir("/mnt/tmp/pfinal")
+
+		#Cerramos el sistema de ficheros de la maquina virtual
 		os.system('sudo vnx_mount_rootfs -u mnt')
+
+		#comprueba si ya se ha llamado al comando create antes para evitar el error de llamarle dos veces
 		if subprocess.call(["sudo","virsh","create",name+".xml"]) != 0:
 			os.chdir("/mnt/tmp/pfinal")
+			#Si no se le ha llamado lo llama
 			os.system('sudo virsh create '+name+'.xml')
 			terminal = "sudo virsh console "+name
+			#Crea una nueva terminal con el valor de la terminal
 			p1 = Popen(['xterm', '-e', terminal])
 	else:
 		os.system("sudo ifconfig LAN1 10.0.1.3/24")
 		os.system("sudo ip route add 10.0.0.0/16 via 10.0.1.1")
+
+#Modifica el archivo hosts de la mv para conectarlo a la red
+#Optimizacion indispensable
 def hosts(name):
 	dochosts = open("hosts", "w")
 	dochosts.write("127.0.0.1	localhost"+"\n")
@@ -307,6 +353,9 @@ def hosts(name):
 	dochosts.write("ff02::1 ip6-allnodes"+"\n")
 	dochosts.write("ff02::2 ip6-allrouters")
 	dochosts.close()
+
+#Modifica el archivo Interface de la mv para conectarlo a la red
+#Optimizacion indispensable
 def interface(name):
 	if  (name != "c1" and name != "lb"):
 		docinterface = open("interfaces", "w")
@@ -369,23 +418,67 @@ def interface(name):
 		print "Solamente se pueden arrancar 7 maquinas virtuales como maximo"				
 #Comienzo de ejecucion
 
+
 #Lectura del comando:
-if len(parametros_comando) == 2: #Si solo se define la orden sin introducir parametros
+
+#Si solo se define la orden sin introducir parametros
+if len(parametros_comando) == 2:
+	
+	#Guarda el parametro que debería ser la orden en la variable orden 
 	orden = parametros_comando[1]
-	parametro = "serie"
+
+	#Al no establecer parametro se toma como valor de serie el escenario completo y se aplica la orden a 5 servidores
+	parametro_num = 5
+
+	#Se comprueba que la orden este entre las disponibles, si se cumple se activa la variable ejecutar
 	if opciones_disponibles.count(orden):
 		ejecutar = True
 
-elif len(parametros_comando) == 3: #Si se define la orden y los parametros correctamente
+#Si se define la orden y los parametros correctamente
+elif len(parametros_comando) == 3: 
+
+	#Guarda el parametro que debería ser la orden en la variable orden
 	orden = parametros_comando[1]
+	
+	#Guarda el parametro que debería ser la parametro en la variable parametro	
 	parametro = parametros_comando[2]
-	print ("La orden introducida es: "+ orden)
+
+	#Si se ejecuta todo correctamente crea el sistema de directorio y copia los ficheros de trabajo
+
+	#Comprobacion del directorio pfinal si existe se situa en el para seguir con la comprobación de ficheros
+	if os.path.exists("/mnt/tmp/pfinal"):
+		os.chdir("/mnt/tmp/pfinal")
+
+	#Si no existe lo crea y se situa en el
+	else:
+		os.mkdir("/mnt/tmp/pfinal")
+		os.chdir("/mnt/tmp/pfinal")
+
+	#Mira a ver si existe la plantilla .qcow, si no existe copia el comprimido y lo descomprime
+	if not os.path.exists("cdps-vm-base-p3.qcow2.bz2") and not os.path.exists("cdps-vm-base-p3.qcow2"):
+
+		#Copia del comprimido
+		os.system("cp /mnt/vnx/repo/cdps/cdps-vm-base-p3.qcow2.bz2 .")
+
+		#Descompresion
+		os.system("bunzip2 cdps-vm-base-p3.qcow2.bz2")
+
+	#Copia de la plantilla xml
+	os.system("cp /mnt/vnx/repo/cdps/plantilla-vm-p3.xml .")
+
+	#Creacion de la carpeta mnt que se usara para inicializar las MVs
+	if not os.path.exists("/mnt/tmp/pfinal/mnt"):
+		os.mkdir("/mnt/tmp/pfinal/mnt")
+	
+	#Comprueba que la orden es correcta si lo es pasa a comprobar el parametro
 	if opciones_disponibles.count(orden):
-		print ("El parametro introducido es: "+ parametro)
+
+		#Comprueba que el parametro es correcto, si lo es activa la variable de ejecucion y convierte el parametro a int
 		if opciones_parametros.count(parametro):
 			ejecutar=True
 			parametro_num=int(parametro)
-			print ("Y el int convertido es ", parametro_num)
+
+			#Si se ejecuta todo correctamente crea el sistema de directorio y copia los ficheros de trabajo
 			if os.path.exists("/mnt/tmp/pfinal"):
 				os.chdir("/mnt/tmp/pfinal")
 			else:
@@ -405,7 +498,7 @@ elif len(parametros_comando) == 3: #Si se define la orden y los parametros corre
 else:
 	print("Para ejecutar el script debe definir una orden entre las posibles, para mas info opcion -h")
 
-#Si el comando es correcto, comenzamos la ejecucion
+#Si el comando es correcto, comenzamos la ejecucion de la orden concreta
 if (ejecutar == True):
 	if orden=="create":
 		create(parametro_num)
