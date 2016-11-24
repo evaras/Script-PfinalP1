@@ -2,10 +2,17 @@ INFO ÚTIL/NECESARIA EXAMEN:
 
 1_ En el CREATE modificamos un xml, función exacta de este en la creación
 
-2_Funcionamiento del tree en plan bien, modificar los comentarios a medida que sepamos más concreto el significado/ la función del comando
+2_ Funcionamiento del tree en plan bien, modificar los comentarios a medida que sepamos más concreto el significado/ la función del comando
 
-3_Saber para que sirve cada uno de los comandos de la funcion CONFIGURARESCENARIO() y que implican.
+3_ Saber para que sirve cada uno de los comandos de la funcion CONFIGURARESCENARIO() y que implican.
 
-4_Comandos ed comprobación de arranque (funcion Arrancada()), saber que significa cada uno (es la concatenación de 2)
+4_ Comandos de comprobación de arranque (funcion Arrancada()), saber que significa cada uno (es la concatenación de 2)
 
-5_
+5_ En la funcion ARRANCA() hay varios comandos que mirarse:
+	1_ El comando de VNX me lo preguntaron el año pasado y hay que controlar ben la definición que no le gusto mucho la explicación por encima que di el año pasado
+	2_Entender modificaciones de archivos, saber a que se refiere cada una
+
+6_ Al final de la funcion ARRANCA() hay unos comandos copiados del año pasado y no se bien que implican/hacen => Imperativo estudio de los mismos
+
+
+ 

@@ -14,4 +14,6 @@ Mejoras SCRIPT:
 
 7_ En la función arrancar habría que comprobar antes cuantas hay arrancadas, porque si ej: estan arrancadas la 2 y la 5 y creadas la 1, la 2 y la 5, un start 2 arrancará la 1, y no haría falta, porque ya hay 2 arrancadas
 
-8_ La funcion ARRANCA() y sus subfunciones se pueden optimizar de mil maneras => Estudio en detalle
+8_ La funcion ARRANCA() y sus subfunciones (HOSTS() E INTERFACE()) se pueden optimizar de mil maneras => Estudio en detalle.
+
+9_
